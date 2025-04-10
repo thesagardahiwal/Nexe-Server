@@ -1,14 +1,16 @@
-const sdk = require("node-appwrite");
-const fetch = require("node-fetch");
-require('dotenv').config();
+import { Client, Databases } from "node-appwrite";
+import fetch from 'node-fetch'
+import dotenv from "dotenv"
+
+dotenv.config();
 
 module.exports = async ({ req, res, log }) => {
-  const client = new sdk.Client()
+  const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)
     .setProject(process.env.APPWRITE_PROJECT_ID)
     .setKey(process.env.APPWRITE_API_KEY);
 
-  const databases = new sdk.Databases(client);
+  const databases = new Databases(client);
 
   try {
     const { senderId, receiverId, messageText, chatId } = JSON.parse(req.body);
