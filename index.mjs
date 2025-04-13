@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export default async function handler(req, res, log) {
+export default async function handler(req, res) {
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)
     .setProject(process.env.APPWRITE_PROJECT_ID)
@@ -53,10 +53,10 @@ export default async function handler(req, res, log) {
     });
 
     const pushJson = await pushRes.json();
-    log("Push response: " + JSON.stringify(pushJson));
+    console.log("Push response: " + JSON.stringify(pushJson)); // Log success response
     res.json({ success: true, message: "Notification sent", pushJson });
   } catch (err) {
-    log("Error: " + err.message);
+    console.error("Error: " + err.message); // Log error
     res.json({ success: false, error: err.message });
   }
 };
