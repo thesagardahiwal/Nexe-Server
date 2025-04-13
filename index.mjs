@@ -5,7 +5,6 @@ import dotenv from "dotenv"
 dotenv.config();
 
 module.exports = async ({ req, res, log }) => {
-  console.log("Server Listened!");
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)
     .setProject(process.env.APPWRITE_PROJECT_ID)
@@ -32,7 +31,6 @@ module.exports = async ({ req, res, log }) => {
     const expoPushToken = receiverDoc.expoPushToken;
 
     if (!expoPushToken) {
-      log("Receiver has no expoPushToken.");
       return res.json({ success: false, reason: "No token" });
     }
 
