@@ -1,7 +1,10 @@
 import { Client, Databases } from "node-appwrite";
 import fetch from 'node-fetch';
+import dotenv from "dotenv";
 
-export default async function handler(req, res, context) {
+dotenv.config();
+
+export default async function handler(req, context) {
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)
     .setProject(process.env.APPWRITE_PROJECT_ID)
@@ -10,9 +13,8 @@ export default async function handler(req, res, context) {
   const databases = new Databases(client);
 
   try {
-    const { senderId, receiverId, messageText, chatId } = await req.json(); // ✅ Parse JSON safely
+    const { senderId, receiverId, messageText, chatId } = await req.json();
 
-    // Fetch sender info
     const senderDoc = await databases.getDocument(
       process.env.APPWRITE_DATABASE_ID,
       process.env.APPWRITE_USER_COLLECTION_ID,
@@ -28,18 +30,15 @@ export default async function handler(req, res, context) {
     const expoPushToken = receiverDoc.expoPushToken;
 
     if (!expoPushToken) {
-      return res.json({ success: false, reason: "Receiver has no expoPushToken" });
+      return Response.json({ success: false, reason: "No token" });
     }
 
     const payload = {
       to: expoPushToken,
       sound: "default",
-      title: `New message from ${senderDoc.name || "Someone"}`,
+      title: `New message from ${senderDoc.name}`,
       body: messageText,
-      data: {
-        chatId,
-        url: `myapp://chat/${chatId}`
-      },
+      data: { chatId },
     };
 
     const pushRes = await fetch("https://exp.host/--/api/v2/push/send", {
@@ -53,12 +52,11 @@ export default async function handler(req, res, context) {
     });
 
     const pushJson = await pushRes.json();
+    context.log("✅ Push response:", pushJson);
 
-    context.log("✅ Push sent:", JSON.stringify(pushJson));
-    return res.json({ success: true, message: "Notification sent", pushJson });
-
+    return Response.json({ success: true, message: "Notification sent", pushJson });
   } catch (err) {
-    context.error("❌ Error:", err.message);
-    return res.json({ success: false, error: err.message });
+    context.error("❌ Error sending notification:", err.message);
+    return Response.json({ success: false, error: err.message });
   }
 }
