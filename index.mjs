@@ -1,10 +1,10 @@
 import { Client, Databases } from "node-appwrite";
-import fetch from 'node-fetch'
-import dotenv from "dotenv"
+import fetch from 'node-fetch';
+import dotenv from "dotenv";
 
 dotenv.config();
 
-module.exports = async ({ req, res, log }) => {
+export default async function handler(req, res, log) {
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)
     .setProject(process.env.APPWRITE_PROJECT_ID)
