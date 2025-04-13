@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export default async function handler(req, res) {
+export default async function handler(req) {
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)
     .setProject(process.env.APPWRITE_PROJECT_ID)
@@ -31,7 +31,10 @@ export default async function handler(req, res) {
     const expoPushToken = receiverDoc.expoPushToken;
 
     if (!expoPushToken) {
-      return res.json({ success: false, reason: "No token" });
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, reason: "No token" }),
+      };
     }
 
     const payload = {
@@ -53,10 +56,16 @@ export default async function handler(req, res) {
     });
 
     const pushJson = await pushRes.json();
-    console.log("Push response: " + JSON.stringify(pushJson)); // Log success response
-    res.json({ success: true, message: "Notification sent", pushJson });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, message: "Notification sent", pushJson }),
+    };
   } catch (err) {
-    console.error("Error: " + err.message); // Log error
-    res.json({ success: false, error: err.message });
+    console.error("Error: " + err.message);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ success: false, error: err.message }),
+    };
   }
 };
