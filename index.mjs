@@ -31,9 +31,7 @@ export default async ({ req, res, log, error }) => {
     let receiverDoc;
     let senderDoc;
     let expoPushToken;
-
     if (privateId) {
-      notificationType = "guest_message";
       const userSnap = await databases.listDocuments(
         APPWRITE_DATABASE_ID,
         APPWRITE_USER_COLLECTION_ID,
