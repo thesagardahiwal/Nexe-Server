@@ -24,16 +24,12 @@ export default async ({ req, res, log, error }) => {
       privateId,
       receiverId,
       messageText,
-      chatId,
       customTitle,
-      customLogo,
-      avatarUrl,
-      timestamp,
+      data
     } = body;
 
     let receiverDoc;
     let senderDoc;
-    let notificationType = "private_message";
     let expoPushToken;
 
     if (privateId) {
@@ -73,17 +69,10 @@ export default async ({ req, res, log, error }) => {
       to: expoPushToken,
       sound: "default",
       title: customTitle || `New message from ${senderDoc?.username || "Guest"}`,
-      body: `${messageText}${timestamp ? ` • ${timestamp}` : ""}`,
-      data: {
-        type: notificationType,
-        chatId,
-        senderId,
-        contactData: senderDoc,
-        avatarUrl: avatarUrl || senderDoc?.avatarUrl,
-      },
+      body: `${messageText}`,
+      data: data,
       android: {
-        icon: customLogo || undefined,
-        imageUrl: avatarUrl || senderDoc?.avatarUrl,
+        imageUrl: data.imageUrl || avatarUrl || senderDoc?.avatarUrl,
       },
     };
 
