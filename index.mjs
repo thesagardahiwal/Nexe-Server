@@ -1,17 +1,14 @@
 import { Client, Databases } from "node-appwrite";
 import fetch from "node-fetch";
 
-/**
- * Appwrite function to send Expo push notification
- */
-export default async ({ req, res, log, error, context }) => {
+export default async ({ req, res, log, error }) => {
   const {
     APPWRITE_ENDPOINT,
     APPWRITE_PROJECT_ID,
     APPWRITE_API_KEY,
     APPWRITE_DATABASE_ID,
     APPWRITE_USER_COLLECTION_ID,
-  } = context.env;
+  } = process.env; // ✅ Use process.env here
 
   const client = new Client()
     .setEndpoint(APPWRITE_ENDPOINT)
