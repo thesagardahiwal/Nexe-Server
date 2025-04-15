@@ -54,7 +54,7 @@ export default async ({ req, res, log, error }) => {
     const payload = {
       to: expoPushToken,
       sound: "default",
-      title: customTitle || `New message from ${senderDoc.name}`,
+      title: customTitle || `New message from ${senderDoc.username}`,
       body: `${messageText}${timestamp ? ` • ${timestamp}` : ""}`,
       data: {
         chatId,
