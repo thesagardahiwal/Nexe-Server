@@ -1,36 +1,48 @@
 import { Client, Databases } from "node-appwrite";
-import fetch from 'node-fetch';
-import dotenv from "dotenv";
+import fetch from "node-fetch";
 
-dotenv.config();
+/**
+ * Appwrite function to send Expo push notification
+ */
+export default async ({ req, res, log, error, context }) => {
+  const {
+    APPWRITE_ENDPOINT,
+    APPWRITE_PROJECT_ID,
+    APPWRITE_API_KEY,
+    APPWRITE_DATABASE_ID,
+    APPWRITE_USER_COLLECTION_ID,
+  } = context.env;
 
-export default async function handler(req, context) {
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_ENDPOINT)
-    .setProject(process.env.APPWRITE_PROJECT_ID)
-    .setKey(process.env.APPWRITE_API_KEY);
+    .setEndpoint(APPWRITE_ENDPOINT)
+    .setProject(APPWRITE_PROJECT_ID)
+    .setKey(APPWRITE_API_KEY);
 
   const databases = new Databases(client);
 
   try {
-    const { senderId, receiverId, messageText, chatId } = await req.json();
+    const body = JSON.parse(req.body || "{}");
+    const { senderId, receiverId, messageText, chatId } = body;
+
+    if (!senderId || !receiverId || !messageText || !chatId) {
+      return res.json({ success: false, error: "Missing required fields" }, 400);
+    }
 
     const senderDoc = await databases.getDocument(
-      process.env.APPWRITE_DATABASE_ID,
-      process.env.APPWRITE_USER_COLLECTION_ID,
+      APPWRITE_DATABASE_ID,
+      APPWRITE_USER_COLLECTION_ID,
       senderId
     );
 
     const receiverDoc = await databases.getDocument(
-      process.env.APPWRITE_DATABASE_ID,
-      process.env.APPWRITE_USER_COLLECTION_ID,
+      APPWRITE_DATABASE_ID,
+      APPWRITE_USER_COLLECTION_ID,
       receiverId
     );
 
-    const expoPushToken = receiverDoc.expoPushToken;
-
+    const expoPushToken = receiverDoc?.expoPushToken;
     if (!expoPushToken) {
-      return Response.json({ success: false, reason: "No token" });
+      return res.json({ success: false, error: "No Expo push token found" }, 404);
     }
 
     const payload = {
@@ -52,11 +64,14 @@ export default async function handler(req, context) {
     });
 
     const pushJson = await pushRes.json();
-    context.log("✅ Push response:", pushJson);
 
-    return Response.json({ success: true, message: "Notification sent", pushJson });
+    return res.json({
+      success: true,
+      message: "Notification sent successfully",
+      result: pushJson,
+    });
   } catch (err) {
-    context.error("❌ Error sending notification:", err.message);
-    return Response.json({ success: false, error: err.message });
+    error("Error: " + err.message);
+    return res.json({ success: false, error: err.message }, 500);
   }
-}
+};
