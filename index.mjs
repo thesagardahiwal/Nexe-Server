@@ -59,6 +59,7 @@ export default async ({ req, res, log, error }) => {
       data: {
         chatId,
         senderId,
+        contactData: senderDoc,
         avatarUrl: avatarUrl || senderDoc.avatarUrl,
       },
       android: {
