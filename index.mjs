@@ -8,7 +8,7 @@ export default async ({ req, res, log, error }) => {
     APPWRITE_API_KEY,
     APPWRITE_DATABASE_ID,
     APPWRITE_USER_COLLECTION_ID,
-  } = process.env; // ✅ Use process.env here
+  } = process.env;
 
   const client = new Client()
     .setEndpoint(APPWRITE_ENDPOINT)
@@ -18,7 +18,7 @@ export default async ({ req, res, log, error }) => {
   const databases = new Databases(client);
 
   try {
-    const body = JSON.parse(req.body || "{}");
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const { senderId, receiverId, messageText, chatId } = body;
 
     if (!senderId || !receiverId || !messageText || !chatId) {
