@@ -19,7 +19,16 @@ export default async ({ req, res, log, error }) => {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
-    const { senderId, receiverId, messageText, chatId } = body;
+    const {
+      senderId,
+      receiverId,
+      messageText,
+      chatId,
+      customTitle,
+      customLogo,
+      avatarUrl,
+      timestamp,
+    } = body;
 
     if (!senderId || !receiverId || !messageText || !chatId) {
       return res.json({ success: false, error: "Missing required fields" }, 400);
@@ -45,9 +54,17 @@ export default async ({ req, res, log, error }) => {
     const payload = {
       to: expoPushToken,
       sound: "default",
-      title: `New message from ${senderDoc.name}`,
-      body: messageText,
-      data: { chatId },
+      title: customTitle || `New message from ${senderDoc.name}`,
+      body: `${messageText}${timestamp ? ` • ${timestamp}` : ""}`,
+      data: {
+        chatId,
+        senderId,
+        avatarUrl: avatarUrl || senderDoc.avatarUrl,
+      },
+      android: {
+        icon: customLogo || undefined, // Expo Android-only custom icon
+        imageUrl: avatarUrl || senderDoc.avatarUrl, // visible in expanded notification
+      },
     };
 
     const pushRes = await fetch("https://exp.host/--/api/v2/push/send", {
