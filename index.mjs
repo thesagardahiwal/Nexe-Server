@@ -42,7 +42,7 @@ export default async ({ req, res, log, error }) => {
       }
       receiverDoc = userSnap.documents[0];
     } else {
-      if (!senderId || !receiverId || !messageText || !chatId) {
+      if (!senderId || !receiverId || !messageText) {
         return res.json({ success: false, error: "Missing required fields" }, 400);
       }
 
@@ -62,15 +62,16 @@ export default async ({ req, res, log, error }) => {
     if (!expoPushToken) {
       return res.json({ success: false, error: "No Expo push token found" }, 404);
     }
+    const title = customTitle || `New message from ${senderDoc?.username || (privateId ? "Guest" : "Unknown")}`;
 
     const payload = {
       to: expoPushToken,
       sound: "default",
-      title: customTitle || `New message from ${senderDoc?.username || "Guest"}`,
+      title: title,
       body: `${messageText}`,
-      data: data,
+      data: data || {},
       android: {
-        imageUrl: data.imageUrl || avatarUrl || senderDoc?.avatarUrl,
+        imageUrl: data?.imageUrl || senderDoc?.avatarUrl,
       },
     };
 
