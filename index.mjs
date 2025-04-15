@@ -1,4 +1,4 @@
-import { Client, Databases } from "node-appwrite";
+import { Client, Databases, Query } from "node-appwrite";
 import fetch from "node-fetch";
 
 export default async ({ req, res, log, error }) => {
@@ -21,6 +21,7 @@ export default async ({ req, res, log, error }) => {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const {
       senderId,
+      privateId,
       receiverId,
       messageText,
       chatId,
@@ -30,23 +31,40 @@ export default async ({ req, res, log, error }) => {
       timestamp,
     } = body;
 
-    if (!senderId || !receiverId || !messageText || !chatId) {
-      return res.json({ success: false, error: "Missing required fields" }, 400);
+    let receiverDoc;
+    let senderDoc;
+    let notificationType = "private_message";
+    let expoPushToken;
+
+    if (privateId) {
+      notificationType = "guest_message";
+      const userSnap = await databases.listDocuments(
+        APPWRITE_DATABASE_ID,
+        APPWRITE_USER_COLLECTION_ID,
+        [Query.equal("privateId", privateId)]
+      );
+      if (!userSnap?.documents.length) {
+        return res.json({ success: false, error: "No user for this private ID" }, 404);
+      }
+      receiverDoc = userSnap.documents[0];
+    } else {
+      if (!senderId || !receiverId || !messageText || !chatId) {
+        return res.json({ success: false, error: "Missing required fields" }, 400);
+      }
+
+      senderDoc = await databases.getDocument(
+        APPWRITE_DATABASE_ID,
+        APPWRITE_USER_COLLECTION_ID,
+        senderId
+      );
+      receiverDoc = await databases.getDocument(
+        APPWRITE_DATABASE_ID,
+        APPWRITE_USER_COLLECTION_ID,
+        receiverId
+      );
     }
 
-    const senderDoc = await databases.getDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_USER_COLLECTION_ID,
-      senderId
-    );
-
-    const receiverDoc = await databases.getDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_USER_COLLECTION_ID,
-      receiverId
-    );
-
-    const expoPushToken = receiverDoc?.expoPushToken;
+    expoPushToken = receiverDoc?.expoPushToken;
     if (!expoPushToken) {
       return res.json({ success: false, error: "No Expo push token found" }, 404);
     }
@@ -54,17 +72,18 @@ export default async ({ req, res, log, error }) => {
     const payload = {
       to: expoPushToken,
       sound: "default",
-      title: customTitle || `New message from ${senderDoc.username}`,
+      title: customTitle || `New message from ${senderDoc?.username || "Guest"}`,
       body: `${messageText}${timestamp ? ` • ${timestamp}` : ""}`,
       data: {
+        type: notificationType,
         chatId,
         senderId,
         contactData: senderDoc,
-        avatarUrl: avatarUrl || senderDoc.avatarUrl,
+        avatarUrl: avatarUrl || senderDoc?.avatarUrl,
       },
       android: {
-        icon: customLogo || undefined, // Expo Android-only custom icon
-        imageUrl: avatarUrl || senderDoc.avatarUrl, // visible in expanded notification
+        icon: customLogo || undefined,
+        imageUrl: avatarUrl || senderDoc?.avatarUrl,
       },
     };
 
